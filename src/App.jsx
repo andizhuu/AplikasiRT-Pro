@@ -6,7 +6,9 @@ import {
 
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Warga from "./pages/Warga";
 import ProtectedRoute from "./routes/ProtectedRoute";
+
 
 export default function App() {
   return (
@@ -22,6 +24,14 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+  path="/warga"
+  element={
+    <ProtectedRoute>
+      <Warga />
+    </ProtectedRoute>
+  }
+/>
       </Routes>
     </BrowserRouter>
   );
