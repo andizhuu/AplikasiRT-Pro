@@ -29,6 +29,12 @@ export default function Dashboard() {
   const [totalKK, setTotalKK] =
     useState(0);
 
+  const [totalIuran, setTotalIuran] =
+    useState(0);
+
+  const [saldoKas, setSaldoKas] =
+    useState(0);
+
   useEffect(() => {
     loadData();
   }, []);
@@ -43,12 +49,59 @@ export default function Dashboard() {
         collection(db, "kk")
       );
 
+      const iuranSnapshot = await getDocs(
+        collection(db, "iuran")
+      );
+
+      const kasSnapshot = await getDocs(
+        collection(db, "kas")
+      );
+
       setTotalWarga(
         wargaSnapshot.size
       );
 
       setTotalKK(
         kkSnapshot.size
+      );
+
+      const totalIuranValue =
+        iuranSnapshot.docs.reduce(
+          (total, doc) =>
+            total +
+            Number(
+              doc.data().nominal || 0
+            ),
+          0
+        );
+
+      setTotalIuran(
+        totalIuranValue
+      );
+
+      let masuk = 0;
+      let keluar = 0;
+
+      kasSnapshot.docs.forEach(
+        (item) => {
+          const data = item.data();
+
+          if (
+            data.jenis === "masuk"
+          ) {
+            masuk += Number(
+              data.nominal || 0
+            );
+          } else {
+            keluar += Number(
+              data.nominal || 0
+            );
+          }
+        }
+      );
+
+      setSaldoKas(
+        masuk - keluar
       );
     } catch (error) {
       console.log(error);
@@ -178,9 +231,14 @@ export default function Dashboard() {
             color="#fdcb6e"
           />
 
-          <h2>Rp0</h2>
+          <h2>
+            Rp
+            {totalIuran.toLocaleString(
+              "id-ID"
+            )}
+          </h2>
 
-          <p>Iuran</p>
+          <p>Total Iuran</p>
         </motion.div>
 
         <motion.div
@@ -198,13 +256,22 @@ export default function Dashboard() {
             color="#6c5ce7"
           />
 
-          <h2>Rp0</h2>
+          <h2>
+            Rp
+            {saldoKas.toLocaleString(
+              "id-ID"
+            )}
+          </h2>
 
-          <p>Kas</p>
+          <p>Saldo Kas</p>
         </motion.div>
       </div>
 
-      <h3>
+      <h3
+        style={{
+          marginBottom: "15px",
+        }}
+      >
         Menu Utama
       </h3>
 
@@ -255,6 +322,9 @@ export default function Dashboard() {
             scale: 0.95,
           }}
           style={menuCard}
+          onClick={() =>
+            navigate("/iuran")
+          }
         >
           <FaMoneyBillWave
             size={40}
@@ -269,6 +339,9 @@ export default function Dashboard() {
             scale: 0.95,
           }}
           style={menuCard}
+          onClick={() =>
+            navigate("/kas")
+          }
         >
           <FaWallet
             size={40}
@@ -283,6 +356,9 @@ export default function Dashboard() {
             scale: 0.95,
           }}
           style={menuCard}
+          onClick={() =>
+            navigate("/pengumuman")
+          }
         >
           <FaBullhorn
             size={40}
@@ -304,8 +380,7 @@ export default function Dashboard() {
           padding: "16px",
           border: "none",
           borderRadius: "20px",
-          background:
-            "#ff5252",
+          background: "#ff5252",
           color: "#fff",
           fontSize: "16px",
           fontWeight: "bold",
