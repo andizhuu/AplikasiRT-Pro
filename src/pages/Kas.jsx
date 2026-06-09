@@ -281,15 +281,17 @@ export default function Kas() {
             )}
           </p>
 
-          <button
-            onClick={() =>
-              hapusKas(item.id)
-            }
-            style={deleteButton}
-          >
-            <FaTrash />
-            {" "}Hapus
-          </button>
+          {!item.keterangan?.startsWith("Iuran ") && (
+  <button
+    onClick={() =>
+      hapusKas(item.id)
+    }
+    style={deleteButton}
+  >
+    <FaTrash />
+    {" "}Hapus
+  </button>
+)}
         </div>
       ))}
     </div>

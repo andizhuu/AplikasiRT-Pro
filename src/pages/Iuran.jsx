@@ -6,13 +6,13 @@ import {
   deleteDoc,
   doc,
   updateDoc,
+  getDoc,
 } from "firebase/firestore";
 
 import { db } from "../firebase/firebase";
 import { useNavigate } from "react-router-dom";
 
 import Swal from "sweetalert2";
-
 import { motion } from "framer-motion";
 
 import {
@@ -25,15 +25,28 @@ import {
 export default function Iuran() {
   const navigate = useNavigate();
 
-  const [nama, setNama] = useState("");
-  const [bulan, setBulan] = useState("");
-  const [tahun, setTahun] = useState("");
-  const [nominal, setNominal] = useState("");
+  const [kepalaKeluarga, setKepalaKeluarga] =
+    useState("");
 
-  const [search, setSearch] = useState("");
-  const [editId, setEditId] = useState(null);
+  const [bulan, setBulan] =
+    useState("");
+
+  const [tahun, setTahun] =
+    useState("");
+
+  const [nominal, setNominal] =
+    useState("");
+
+  const [search, setSearch] =
+    useState("");
+
+  const [editId, setEditId] =
+    useState(null);
 
   const [iuranList, setIuranList] =
+    useState([]);
+
+  const [kkList, setKkList] =
     useState([]);
 
   const neumorphism = {
@@ -45,17 +58,35 @@ export default function Iuran() {
 
   useEffect(() => {
     loadIuran();
+    loadKK();
   }, []);
+
+  const loadKK = async () => {
+    const snapshot = await getDocs(
+      collection(db, "kk")
+    );
+
+    const data = snapshot.docs.map(
+      (d) => ({
+        id: d.id,
+        ...d.data(),
+      })
+    );
+
+    setKkList(data);
+  };
 
   const loadIuran = async () => {
     const snapshot = await getDocs(
       collection(db, "iuran")
     );
 
-    const data = snapshot.docs.map((d) => ({
-      id: d.id,
-      ...d.data(),
-    }));
+    const data = snapshot.docs.map(
+      (d) => ({
+        id: d.id,
+        ...d.data(),
+      })
+    );
 
     setIuranList(data);
   };
@@ -64,7 +95,7 @@ export default function Iuran() {
     e.preventDefault();
 
     if (
-      !nama ||
+      !kepalaKeluarga ||
       !bulan ||
       !tahun ||
       !nominal
@@ -82,42 +113,62 @@ export default function Iuran() {
         await updateDoc(
           doc(db, "iuran", editId),
           {
-            nama,
+            kepalaKeluarga,
             bulan,
             tahun,
-            nominal: Number(nominal),
+            nominal:
+              Number(nominal),
           }
         );
 
         Swal.fire({
           icon: "success",
           title: "Berhasil",
-          text: "Iuran berhasil diperbarui",
+          text:
+            "Iuran berhasil diperbarui",
           timer: 1500,
           showConfirmButton: false,
         });
       } else {
+        const kasRef = await addDoc(
+          collection(db, "kas"),
+          {
+            keterangan:
+              "Iuran " +
+              kepalaKeluarga,
+            nominal:
+              Number(nominal),
+            jenis: "masuk",
+            createdAt:
+              new Date(),
+          }
+        );
+
         await addDoc(
           collection(db, "iuran"),
           {
-            nama,
+            kepalaKeluarga,
             bulan,
             tahun,
-            nominal: Number(nominal),
-            createdAt: new Date(),
+            nominal:
+              Number(nominal),
+            kasId: kasRef.id,
+            createdAt:
+              new Date(),
           }
         );
 
         Swal.fire({
           icon: "success",
           title: "Berhasil",
-          text: "Iuran berhasil ditambahkan",
+          text:
+            "Iuran berhasil ditambahkan",
           timer: 1500,
           showConfirmButton: false,
         });
       }
 
-      setNama("");
+      setKepalaKeluarga("");
       setBulan("");
       setTahun("");
       setNominal("");
@@ -128,16 +179,24 @@ export default function Iuran() {
       Swal.fire({
         icon: "error",
         title: "Gagal",
-        text: "Terjadi kesalahan",
+        text:
+          "Terjadi kesalahan",
       });
     }
   };
 
   const editIuran = (item) => {
-    setNama(item.nama);
+    setKepalaKeluarga(
+      item.kepalaKeluarga
+    );
+
     setBulan(item.bulan);
     setTahun(item.tahun);
-    setNominal(item.nominal);
+
+    setNominal(
+      item.nominal
+    );
+
     setEditId(item.id);
 
     window.scrollTo({
@@ -147,43 +206,82 @@ export default function Iuran() {
   };
 
   const hapusIuran = async (id) => {
-    const result = await Swal.fire({
-      title: "Hapus Iuran?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Ya",
-      cancelButtonText: "Batal",
-    });
+    const result =
+      await Swal.fire({
+        title:
+          "Hapus Iuran?",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText:
+          "Ya",
+        cancelButtonText:
+          "Batal",
+      });
 
-    if (!result.isConfirmed) return;
+    if (!result.isConfirmed)
+      return;
 
-    await deleteDoc(
-      doc(db, "iuran", id)
-    );
+    try {
+      const iuranRef =
+        doc(db, "iuran", id);
 
-    loadIuran();
+      const iuranSnap =
+        await getDoc(iuranRef);
 
-    Swal.fire({
-      icon: "success",
-      title: "Terhapus",
-      timer: 1500,
-      showConfirmButton: false,
-    });
+      if (iuranSnap.exists()) {
+        const data =
+          iuranSnap.data();
+
+        if (data.kasId) {
+          await deleteDoc(
+            doc(
+              db,
+              "kas",
+              data.kasId
+            )
+          );
+        }
+      }
+
+      await deleteDoc(iuranRef);
+
+      await loadIuran();
+
+      Swal.fire({
+        icon: "success",
+        title: "Terhapus",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Gagal",
+        text:
+          "Tidak dapat menghapus data",
+      });
+    }
   };
 
   const totalIuran =
     iuranList.reduce(
       (a, b) =>
-        a + Number(b.nominal || 0),
+        a +
+        Number(
+          b.nominal || 0
+        ),
       0
     );
 
-  const filtered = iuranList.filter(
-    (item) =>
-      item.nama
-        ?.toLowerCase()
-        .includes(search.toLowerCase())
-  );
+  const filtered =
+    iuranList.filter(
+      (item) =>
+        item.kepalaKeluarga
+          ?.toLowerCase()
+          .includes(
+            search.toLowerCase()
+          )
+    );
 
   return (
     <div
@@ -194,26 +292,36 @@ export default function Iuran() {
       }}
     >
       <motion.button
-        whileTap={{ scale: 0.95 }}
+        whileTap={{
+          scale: 0.95,
+        }}
         onClick={() =>
-          navigate("/dashboard")
+          navigate(
+            "/dashboard"
+          )
         }
         style={{
           ...neumorphism,
           border: "none",
-          padding: "12px 18px",
-          marginBottom: "15px",
+          padding:
+            "12px 18px",
+          marginBottom:
+            "15px",
         }}
       >
-        <FaArrowLeft /> Dashboard
+        <FaArrowLeft />
+        {" "}
+        Dashboard
       </motion.button>
 
       <div
         style={{
           ...neumorphism,
           padding: "20px",
-          textAlign: "center",
-          marginBottom: "20px",
+          textAlign:
+            "center",
+          marginBottom:
+            "20px",
         }}
       >
         <FaMoneyBillWave
@@ -221,7 +329,9 @@ export default function Iuran() {
           color="#00b894"
         />
 
-        <h2>Iuran Warga</h2>
+        <h2>
+          Iuran Warga
+        </h2>
 
         <h3>
           Rp
@@ -231,47 +341,93 @@ export default function Iuran() {
         </h3>
       </div>
 
-      <form onSubmit={simpanIuran}>
-        <input
-          placeholder="Nama Warga"
-          value={nama}
-          onChange={(e) =>
-            setNama(e.target.value)
+      <form
+        onSubmit={
+          simpanIuran
+        }
+      >
+        <select
+          value={
+            kepalaKeluarga
           }
-          style={inputStyle}
-        />
+          onChange={(e) =>
+            setKepalaKeluarga(
+              e.target.value
+            )
+          }
+          style={
+            inputStyle
+          }
+        >
+          <option value="">
+            Pilih KK
+          </option>
+
+          {kkList.map(
+            (item) => (
+              <option
+                key={
+                  item.id
+                }
+                value={
+                  item.kepalaKeluarga
+                }
+              >
+                {
+                  item.kepalaKeluarga
+                }
+              </option>
+            )
+          )}
+        </select>
 
         <input
           placeholder="Bulan"
           value={bulan}
           onChange={(e) =>
-            setBulan(e.target.value)
+            setBulan(
+              e.target.value
+            )
           }
-          style={inputStyle}
+          style={
+            inputStyle
+          }
         />
 
         <input
           placeholder="Tahun"
           value={tahun}
           onChange={(e) =>
-            setTahun(e.target.value)
+            setTahun(
+              e.target.value
+            )
           }
-          style={inputStyle}
+          style={
+            inputStyle
+          }
         />
 
         <input
           type="number"
           placeholder="Nominal"
-          value={nominal}
-          onChange={(e) =>
-            setNominal(e.target.value)
+          value={
+            nominal
           }
-          style={inputStyle}
+          onChange={(e) =>
+            setNominal(
+              e.target.value
+            )
+          }
+          style={
+            inputStyle
+          }
         />
 
         <button
           type="submit"
-          style={submitButton}
+          style={
+            submitButton
+          }
         >
           {editId
             ? "✏️ Update Iuran"
@@ -280,64 +436,99 @@ export default function Iuran() {
       </form>
 
       <input
-        placeholder="Cari Nama..."
+        placeholder="Cari KK..."
         value={search}
         onChange={(e) =>
-          setSearch(e.target.value)
+          setSearch(
+            e.target.value
+          )
         }
-        style={inputStyle}
+        style={
+          inputStyle
+        }
       />
 
-      {filtered.map((item) => (
-        <div
-          key={item.id}
-          style={{
-            ...neumorphism,
-            padding: "18px",
-            marginTop: "15px",
-          }}
-        >
-          <h3>{item.nama}</h3>
-
-          <p>
-            {item.bulan} {item.tahun}
-          </p>
-
-          <p>
-            Rp
-            {Number(
-              item.nominal
-            ).toLocaleString("id-ID")}
-          </p>
-
+      {filtered.map(
+        (item) => (
           <div
+            key={
+              item.id
+            }
             style={{
-              display: "flex",
-              gap: "10px",
+              ...neumorphism,
+              padding:
+                "18px",
+              marginTop:
+                "15px",
             }}
           >
-            <button
-              onClick={() =>
-                editIuran(item)
+            <h3>
+              {
+                item.kepalaKeluarga
               }
-              type="button"
-              style={editButton}
-            >
-              <FaEdit /> Edit
-            </button>
+            </h3>
 
-            <button
-              onClick={() =>
-                hapusIuran(item.id)
+            <p>
+              {
+                item.bulan
+              }{" "}
+              {
+                item.tahun
               }
-              type="button"
-              style={deleteButton}
+            </p>
+
+            <p>
+              Rp
+              {Number(
+                item.nominal
+              ).toLocaleString(
+                "id-ID"
+              )}
+            </p>
+
+            <div
+              style={{
+                display:
+                  "flex",
+                gap:
+                  "10px",
+              }}
             >
-              <FaTrash /> Hapus
-            </button>
+              <button
+                onClick={() =>
+                  editIuran(
+                    item
+                  )
+                }
+                type="button"
+                style={
+                  editButton
+                }
+              >
+                <FaEdit />
+                {" "}
+                Edit
+              </button>
+
+              <button
+                onClick={() =>
+                  hapusIuran(
+                    item.id
+                  )
+                }
+                type="button"
+                style={
+                  deleteButton
+                }
+              >
+                <FaTrash />
+                {" "}
+                Hapus
+              </button>
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      )}
     </div>
   );
 }

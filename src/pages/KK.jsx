@@ -27,7 +27,12 @@ export default function KK() {
   const [noKK, setNoKK] = useState("");
   const [kepalaKeluarga, setKepalaKeluarga] =
     useState("");
-  const [alamat, setAlamat] = useState("");
+
+  const [jumlahAnggota, setJumlahAnggota] =
+    useState("");
+
+  const [noHp, setNoHp] =
+    useState("");
 
   const [search, setSearch] = useState("");
   const [kkList, setKkList] = useState([]);
@@ -64,7 +69,12 @@ export default function KK() {
   const simpanKK = async (e) => {
     e.preventDefault();
 
-    if (!noKK || !kepalaKeluarga || !alamat) {
+    if (
+      !noKK ||
+      !kepalaKeluarga ||
+      !jumlahAnggota ||
+      !noHp
+    ) {
       Swal.fire({
         icon: "warning",
         title: "Data Belum Lengkap",
@@ -80,14 +90,17 @@ export default function KK() {
           {
             noKK,
             kepalaKeluarga,
-            alamat,
+            jumlahAnggota:
+              Number(jumlahAnggota),
+            noHp,
           }
         );
 
         Swal.fire({
           icon: "success",
           title: "Berhasil",
-          text: "Data KK berhasil diperbarui",
+          text:
+            "Data KK berhasil diperbarui",
           timer: 1500,
           showConfirmButton: false,
         });
@@ -97,7 +110,9 @@ export default function KK() {
           {
             noKK,
             kepalaKeluarga,
-            alamat,
+            jumlahAnggota:
+              Number(jumlahAnggota),
+            noHp,
             createdAt: new Date(),
           }
         );
@@ -105,7 +120,8 @@ export default function KK() {
         Swal.fire({
           icon: "success",
           title: "Berhasil",
-          text: "Data KK berhasil ditambahkan",
+          text:
+            "Data KK berhasil ditambahkan",
           timer: 1500,
           showConfirmButton: false,
         });
@@ -113,7 +129,8 @@ export default function KK() {
 
       setNoKK("");
       setKepalaKeluarga("");
-      setAlamat("");
+      setJumlahAnggota("");
+      setNoHp("");
       setEditId(null);
 
       loadKK();
@@ -130,8 +147,18 @@ export default function KK() {
 
   const editKK = (item) => {
     setNoKK(item.noKK);
-    setKepalaKeluarga(item.kepalaKeluarga);
-    setAlamat(item.alamat);
+    setKepalaKeluarga(
+      item.kepalaKeluarga
+    );
+
+    setJumlahAnggota(
+      item.jumlahAnggota || ""
+    );
+
+    setNoHp(
+      item.noHp || ""
+    );
+
     setEditId(item.id);
 
     window.scrollTo({
@@ -143,7 +170,8 @@ export default function KK() {
   const hapusKK = async (id) => {
     const result = await Swal.fire({
       title: "Hapus Data?",
-      text: "Data KK akan dihapus permanen",
+      text:
+        "Data KK akan dihapus permanen",
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Ya, Hapus",
@@ -170,15 +198,17 @@ export default function KK() {
       Swal.fire({
         icon: "error",
         title: "Gagal",
-        text: "Tidak bisa menghapus data",
+        text:
+          "Tidak bisa menghapus data",
       });
     }
   };
 
-  const filteredKK = kkList.filter((item) =>
-    item.kepalaKeluarga
-      ?.toLowerCase()
-      .includes(search.toLowerCase())
+  const filteredKK = kkList.filter(
+    (item) =>
+      item.kepalaKeluarga
+        ?.toLowerCase()
+        .includes(search.toLowerCase())
   );
 
   return (
@@ -233,13 +263,7 @@ export default function KK() {
           onChange={(e) =>
             setNoKK(e.target.value)
           }
-          style={{
-            width: "100%",
-            padding: "14px",
-            marginBottom: "10px",
-            borderRadius: "12px",
-            border: "none",
-          }}
+          style={inputStyle}
         />
 
         <input
@@ -250,28 +274,31 @@ export default function KK() {
               e.target.value
             )
           }
-          style={{
-            width: "100%",
-            padding: "14px",
-            marginBottom: "10px",
-            borderRadius: "12px",
-            border: "none",
-          }}
+          style={inputStyle}
         />
 
         <input
-          placeholder="Alamat"
-          value={alamat}
+          type="number"
+          placeholder="Jumlah Anggota Keluarga"
+          value={jumlahAnggota}
           onChange={(e) =>
-            setAlamat(e.target.value)
+            setJumlahAnggota(
+              e.target.value
+            )
           }
-          style={{
-            width: "100%",
-            padding: "14px",
-            marginBottom: "10px",
-            borderRadius: "12px",
-            border: "none",
-          }}
+          style={inputStyle}
+        />
+
+        <input
+          type="tel"
+          placeholder="Nomor HP Kepala Keluarga"
+          value={noHp}
+          onChange={(e) =>
+            setNoHp(
+              e.target.value
+            )
+          }
+          style={inputStyle}
         />
 
         <button
@@ -302,12 +329,8 @@ export default function KK() {
           setSearch(e.target.value)
         }
         style={{
-          width: "100%",
-          padding: "14px",
+          ...inputStyle,
           marginTop: "20px",
-          marginBottom: "20px",
-          borderRadius: "12px",
-          border: "none",
         }}
       />
 
@@ -332,7 +355,18 @@ export default function KK() {
           </p>
 
           <p>
-            <b>Alamat:</b> {item.alamat}
+            <b>
+              Jumlah Anggota
+              Keluarga:
+            </b>{" "}
+            {item.jumlahAnggota || 0}
+          </p>
+
+          <p>
+            <b>
+              No HP Kepala Keluarga:
+            </b>{" "}
+            {item.noHp || "-"}
           </p>
 
           <div
@@ -347,14 +381,7 @@ export default function KK() {
               onClick={() =>
                 editKK(item)
               }
-              style={{
-                flex: 1,
-                border: "none",
-                padding: "10px",
-                borderRadius: "10px",
-                background: "#0984e3",
-                color: "#fff",
-              }}
+              style={editButton}
             >
               <FaEdit /> Edit
             </button>
@@ -364,14 +391,7 @@ export default function KK() {
               onClick={() =>
                 hapusKK(item.id)
               }
-              style={{
-                flex: 1,
-                border: "none",
-                padding: "10px",
-                borderRadius: "10px",
-                background: "#d63031",
-                color: "#fff",
-              }}
+              style={deleteButton}
             >
               <FaTrash /> Hapus
             </button>
@@ -381,3 +401,29 @@ export default function KK() {
     </div>
   );
 }
+
+const inputStyle = {
+  width: "100%",
+  padding: "14px",
+  marginBottom: "10px",
+  borderRadius: "12px",
+  border: "none",
+};
+
+const editButton = {
+  flex: 1,
+  border: "none",
+  padding: "10px",
+  borderRadius: "10px",
+  background: "#0984e3",
+  color: "#fff",
+};
+
+const deleteButton = {
+  flex: 1,
+  border: "none",
+  padding: "10px",
+  borderRadius: "10px",
+  background: "#d63031",
+  color: "#fff",
+};

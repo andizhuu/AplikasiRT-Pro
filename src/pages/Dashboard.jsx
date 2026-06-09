@@ -41,10 +41,6 @@ export default function Dashboard() {
 
   const loadData = async () => {
     try {
-      const wargaSnapshot = await getDocs(
-        collection(db, "warga")
-      );
-
       const kkSnapshot = await getDocs(
         collection(db, "kk")
       );
@@ -57,14 +53,24 @@ export default function Dashboard() {
         collection(db, "kas")
       );
 
-      setTotalWarga(
-        wargaSnapshot.size
-      );
-
       setTotalKK(
         kkSnapshot.size
       );
 
+      // Total Warga dari jumlah anggota keluarga
+      let totalAnggota = 0;
+
+      kkSnapshot.docs.forEach((doc) => {
+        const data = doc.data();
+
+        totalAnggota += Number(
+          data.jumlahAnggota || 0
+        );
+      });
+
+      setTotalWarga(totalAnggota);
+
+      // Total Iuran
       const totalIuranValue =
         iuranSnapshot.docs.reduce(
           (total, doc) =>
@@ -79,6 +85,7 @@ export default function Dashboard() {
         totalIuranValue
       );
 
+      // Saldo Kas
       let masuk = 0;
       let keluar = 0;
 
@@ -283,23 +290,6 @@ export default function Dashboard() {
           gap: "15px",
         }}
       >
-        <motion.div
-          whileTap={{
-            scale: 0.95,
-          }}
-          style={menuCard}
-          onClick={() =>
-            navigate("/warga")
-          }
-        >
-          <FaUsers
-            size={40}
-            color="#00b894"
-          />
-
-          <h4>Data Warga</h4>
-        </motion.div>
-
         <motion.div
           whileTap={{
             scale: 0.95,
