@@ -7,8 +7,9 @@ import {
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Warga from "./pages/Warga";
-import ProtectedRoute from "./routes/ProtectedRoute";
+import KK from "./pages/KK";
 
+import ProtectedRoute from "./routes/ProtectedRoute";
 
 export default function App() {
   return (
@@ -24,14 +25,24 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
-  path="/warga"
-  element={
-    <ProtectedRoute>
-      <Warga />
-    </ProtectedRoute>
-  }
-/>
+          path="/warga"
+          element={
+            <ProtectedRoute>
+              <Warga />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/kk"
+          element={
+            <ProtectedRoute>
+              <KK />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

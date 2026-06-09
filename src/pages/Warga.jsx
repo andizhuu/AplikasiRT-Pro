@@ -5,6 +5,7 @@ import {
   getDocs,
   deleteDoc,
   doc,
+  updateDoc,
 } from "firebase/firestore";
 
 import { db } from "../firebase/firebase";
@@ -17,83 +18,163 @@ export default function Warga() {
   const [nik, setNik] = useState("");
   const [alamat, setAlamat] = useState("");
 
+  const [search, setSearch] = useState("");
   const [warga, setWarga] = useState([]);
-
-  const loadWarga = async () => {
-    const querySnapshot = await getDocs(
-      collection(db, "warga")
-    );
-
-    const data = querySnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
-    setWarga(data);
-  };
+  const [editId, setEditId] = useState(null);
 
   useEffect(() => {
     loadWarga();
   }, []);
 
-  const tambahWarga = async (e) => {
+  const loadWarga = async () => {
+    try {
+      const snapshot = await getDocs(
+        collection(db, "warga")
+      );
+
+      const data = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      }));
+
+      setWarga(data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const simpanWarga = async (e) => {
     e.preventDefault();
 
     if (!nama || !nik || !alamat) {
-      alert("Lengkapi data");
+      alert("Lengkapi semua data");
       return;
     }
 
-    await addDoc(collection(db, "warga"), {
-      nama,
-      nik,
-      alamat,
-      createdAt: new Date(),
+    try {
+      if (editId) {
+        await updateDoc(
+          doc(db, "warga", editId),
+          {
+            nama,
+            nik,
+            alamat,
+          }
+        );
+
+        alert("Data berhasil diupdate");
+      } else {
+        await addDoc(
+          collection(db, "warga"),
+          {
+            nama,
+            nik,
+            alamat,
+            createdAt: new Date(),
+          }
+        );
+
+        alert("Data berhasil ditambahkan");
+      }
+
+      setNama("");
+      setNik("");
+      setAlamat("");
+      setEditId(null);
+
+      loadWarga();
+    } catch (err) {
+      console.log(err);
+      alert("Gagal menyimpan data");
+    }
+  };
+
+  const editWarga = (item) => {
+    setNama(item.nama || "");
+    setNik(item.nik || "");
+    setAlamat(item.alamat || "");
+    setEditId(item.id);
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
     });
-
-    setNama("");
-    setNik("");
-    setAlamat("");
-
-    loadWarga();
   };
 
   const hapusWarga = async (id) => {
-    await deleteDoc(doc(db, "warga", id));
-    loadWarga();
+    const yakin = window.confirm(
+      "Yakin hapus warga?"
+    );
+
+    if (!yakin) return;
+
+    try {
+      await deleteDoc(
+        doc(db, "warga", id)
+      );
+
+      loadWarga();
+    } catch (err) {
+      console.log(err);
+    }
   };
+
+  const filteredWarga = warga.filter((item) =>
+    item.nama
+      ?.toLowerCase()
+      .includes(search.toLowerCase())
+  );
 
   return (
     <div
       style={{
-        padding: "20px",
-        background: "#f4f6f3",
         minHeight: "100vh",
+        background: "#f4f6f3",
+        padding: "20px",
       }}
     >
       <button
-        onClick={() => navigate("/dashboard")}
+        onClick={() =>
+          navigate("/dashboard")
+        }
       >
         ← Dashboard
       </button>
 
-      <h2>Data Warga</h2>
+      <div
+        style={{
+          background: "#1D9E75",
+          color: "white",
+          padding: "20px",
+          borderRadius: "20px",
+          marginTop: "10px",
+          marginBottom: "20px",
+        }}
+      >
+        <h2>👥 Data Warga</h2>
 
-      <form onSubmit={tambahWarga}>
+        <p>
+          Total Warga: {warga.length}
+        </p>
+      </div>
+
+      <form onSubmit={simpanWarga}>
         <input
-          placeholder="Nama"
+          type="text"
+          placeholder="Nama Lengkap"
           value={nama}
           onChange={(e) =>
             setNama(e.target.value)
           }
           style={{
             width: "100%",
-            padding: "10px",
+            padding: "12px",
             marginBottom: "10px",
           }}
         />
 
         <input
+          type="text"
           placeholder="NIK"
           value={nik}
           onChange={(e) =>
@@ -101,12 +182,13 @@ export default function Warga() {
           }
           style={{
             width: "100%",
-            padding: "10px",
+            padding: "12px",
             marginBottom: "10px",
           }}
         />
 
         <input
+          type="text"
           placeholder="Alamat"
           value={alamat}
           onChange={(e) =>
@@ -114,41 +196,105 @@ export default function Warga() {
           }
           style={{
             width: "100%",
-            padding: "10px",
+            padding: "12px",
             marginBottom: "10px",
           }}
         />
 
-        <button type="submit">
-          Tambah Warga
+        <button
+          type="submit"
+          style={{
+            width: "100%",
+            padding: "14px",
+            border: "none",
+            borderRadius: "10px",
+            background: "#1D9E75",
+            color: "white",
+          }}
+        >
+          {editId
+            ? "Update Warga"
+            : "Tambah Warga"}
         </button>
       </form>
 
-      <hr />
+      <input
+        placeholder="Cari Nama Warga..."
+        value={search}
+        onChange={(e) =>
+          setSearch(e.target.value)
+        }
+        style={{
+          width: "100%",
+          padding: "12px",
+          marginTop: "20px",
+          marginBottom: "20px",
+        }}
+      />
 
-      {warga.map((item) => (
+      {filteredWarga.map((item) => (
         <div
           key={item.id}
           style={{
-            background: "white",
-            padding: "12px",
-            borderRadius: "10px",
-            marginBottom: "10px",
+            background: "#fff",
+            padding: "16px",
+            borderRadius: "16px",
+            marginBottom: "12px",
+            boxShadow:
+              "0 2px 10px rgba(0,0,0,0.08)",
           }}
         >
-          <b>{item.nama}</b>
+          <h3>{item.nama}</h3>
 
-          <p>NIK: {item.nik}</p>
+          <p>
+            <b>NIK:</b> {item.nik}
+          </p>
 
-          <p>{item.alamat}</p>
+          <p>
+            <b>Alamat:</b> {item.alamat}
+          </p>
 
-          <button
-            onClick={() =>
-              hapusWarga(item.id)
-            }
+          <div
+            style={{
+              display: "flex",
+              gap: "10px",
+              marginTop: "10px",
+            }}
           >
-            Hapus
-          </button>
+            <button
+              type="button"
+              onClick={() =>
+                editWarga(item)
+              }
+              style={{
+                flex: 1,
+                border: "none",
+                padding: "10px",
+                borderRadius: "8px",
+                background: "#0984e3",
+                color: "white",
+              }}
+            >
+              Edit
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                hapusWarga(item.id)
+              }
+              style={{
+                flex: 1,
+                border: "none",
+                padding: "10px",
+                borderRadius: "8px",
+                background: "#d63031",
+                color: "white",
+              }}
+            >
+              Hapus
+            </button>
+          </div>
         </div>
       ))}
     </div>

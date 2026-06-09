@@ -1,16 +1,44 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+} from "firebase/auth";
+
 import { auth } from "../firebase/firebase";
 
 export default function Login() {
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [email, setEmail] =
+    useState("");
+
+  const [password, setPassword] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(false);
+
+  useEffect(() => {
+    const unsubscribe =
+      onAuthStateChanged(
+        auth,
+        (user) => {
+          if (user) {
+            navigate(
+              "/dashboard",
+              {
+                replace: true,
+              }
+            );
+          }
+        }
+      );
+
+    return () => unsubscribe();
+  }, [navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -27,6 +55,7 @@ export default function Login() {
       Swal.fire({
         icon: "success",
         title: "Login Berhasil",
+        text: "Selamat datang Admin",
         timer: 1500,
         showConfirmButton: false,
       });
@@ -36,8 +65,10 @@ export default function Login() {
       Swal.fire({
         icon: "error",
         title: "Login Gagal",
-        text: error.message,
+        text: "Email atau password salah",
       });
+
+      console.log(error);
     } finally {
       setLoading(false);
     }
@@ -50,30 +81,43 @@ export default function Login() {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        background: "#f4f6f3",
+        background:
+          "#eef2f7",
         padding: "20px",
       }}
     >
       <form
         onSubmit={handleLogin}
         style={{
-          background: "#fff",
+          background:
+            "#eef2f7",
           padding: "30px",
-          borderRadius: "16px",
+          borderRadius:
+            "30px",
           width: "100%",
-          maxWidth: "400px",
-          boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
+          maxWidth: "420px",
+          boxShadow:
+            "12px 12px 24px rgba(0,0,0,0.12), -12px -12px 24px rgba(255,255,255,0.95)",
         }}
       >
-        <h2 style={{ textAlign: "center" }}>
-          Aplikasi RT Pro
-        </h2>
+        <h1
+          style={{
+            textAlign:
+              "center",
+            marginBottom:
+              "10px",
+          }}
+        >
+          RT Pro
+        </h1>
 
         <p
           style={{
-            textAlign: "center",
+            textAlign:
+              "center",
             color: "#666",
-            marginBottom: "25px",
+            marginBottom:
+              "25px",
           }}
         >
           Login Admin
@@ -84,12 +128,19 @@ export default function Login() {
           placeholder="Email"
           value={email}
           onChange={(e) =>
-            setEmail(e.target.value)
+            setEmail(
+              e.target.value
+            )
           }
           style={{
             width: "100%",
-            padding: "12px",
-            marginBottom: "12px",
+            padding:
+              "14px",
+            marginBottom:
+              "12px",
+            border: "none",
+            borderRadius:
+              "12px",
           }}
         />
 
@@ -98,12 +149,19 @@ export default function Login() {
           placeholder="Password"
           value={password}
           onChange={(e) =>
-            setPassword(e.target.value)
+            setPassword(
+              e.target.value
+            )
           }
           style={{
             width: "100%",
-            padding: "12px",
-            marginBottom: "20px",
+            padding:
+              "14px",
+            marginBottom:
+              "20px",
+            border: "none",
+            borderRadius:
+              "12px",
           }}
         />
 
@@ -112,14 +170,23 @@ export default function Login() {
           disabled={loading}
           style={{
             width: "100%",
-            padding: "12px",
+            padding:
+              "14px",
             border: "none",
-            background: "#1D9E75",
+            borderRadius:
+              "15px",
+            background:
+              "#00b894",
             color: "#fff",
-            borderRadius: "8px",
+            fontSize:
+              "16px",
+            fontWeight:
+              "bold",
           }}
         >
-          {loading ? "Loading..." : "Masuk"}
+          {loading
+            ? "Loading..."
+            : "Masuk"}
         </button>
       </form>
     </div>
