@@ -1,5 +1,5 @@
 import {
-  BrowserRouter,
+  HashRouter,
   Routes,
   Route,
 } from "react-router-dom";
@@ -16,7 +16,7 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 
 export default function App() {
   return (
-    <BrowserRouter>
+      <HashRouter>
       <Routes>
         <Route
           path="/"
@@ -77,6 +77,6 @@ export default function App() {
           }
         />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
