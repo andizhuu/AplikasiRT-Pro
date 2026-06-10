@@ -81,19 +81,16 @@ export default function Login() {
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
-        background:
-          "#eef2f7",
+        background: "#eef2f7",
         padding: "20px",
       }}
     >
       <form
         onSubmit={handleLogin}
         style={{
-          background:
-            "#eef2f7",
+          background: "#eef2f7",
           padding: "30px",
-          borderRadius:
-            "30px",
+          borderRadius: "30px",
           width: "100%",
           maxWidth: "420px",
           boxShadow:
@@ -102,10 +99,8 @@ export default function Login() {
       >
         <h1
           style={{
-            textAlign:
-              "center",
-            marginBottom:
-              "10px",
+            textAlign: "center",
+            marginBottom: "10px",
           }}
         >
           RT Pro
@@ -113,11 +108,9 @@ export default function Login() {
 
         <p
           style={{
-            textAlign:
-              "center",
+            textAlign: "center",
             color: "#666",
-            marginBottom:
-              "25px",
+            marginBottom: "25px",
           }}
         >
           Login Admin
@@ -134,13 +127,10 @@ export default function Login() {
           }
           style={{
             width: "100%",
-            padding:
-              "14px",
-            marginBottom:
-              "12px",
+            padding: "14px",
+            marginBottom: "12px",
             border: "none",
-            borderRadius:
-              "12px",
+            borderRadius: "12px",
           }}
         />
 
@@ -155,13 +145,10 @@ export default function Login() {
           }
           style={{
             width: "100%",
-            padding:
-              "14px",
-            marginBottom:
-              "20px",
+            padding: "14px",
+            marginBottom: "20px",
             border: "none",
-            borderRadius:
-              "12px",
+            borderRadius: "12px",
           }}
         />
 
@@ -170,24 +157,45 @@ export default function Login() {
           disabled={loading}
           style={{
             width: "100%",
-            padding:
-              "14px",
+            padding: "14px",
             border: "none",
-            borderRadius:
-              "15px",
-            background:
-              "#00b894",
+            borderRadius: "15px",
+            background: "#00b894",
             color: "#fff",
-            fontSize:
-              "16px",
-            fontWeight:
-              "bold",
+            fontSize: "16px",
+            fontWeight: "bold",
+            cursor: "pointer",
           }}
         >
           {loading
             ? "Loading..."
             : "Masuk"}
         </button>
+
+        <p
+          style={{
+            textAlign: "center",
+            marginTop: "20px",
+            color: "#666",
+          }}
+        >
+          Belum punya RT?
+          <span
+            onClick={() =>
+              navigate(
+                "/register"
+              )
+            }
+            style={{
+              color: "#0984e3",
+              cursor: "pointer",
+              fontWeight: "bold",
+              marginLeft: "5px",
+            }}
+          >
+            Daftar RT Baru
+          </span>
+        </p>
       </form>
     </div>
   );

@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { signOut } from "firebase/auth";
+import {
+  signOut,
+  onAuthStateChanged,
+} from "firebase/auth";
 
 import { auth, db } from "../firebase/firebase";
 
 import {
   collection,
   getDocs,
+  query,
+  where,
 } from "firebase/firestore";
 
 import { motion } from "framer-motion";
@@ -35,9 +40,64 @@ export default function Dashboard() {
   const [saldoKas, setSaldoKas] =
     useState(0);
 
+  const [infoRT, setInfoRT] =
+    useState({
+      rt: "",
+      rw: "",
+      kelurahan: "",
+    });
+
   useEffect(() => {
-    loadData();
-  }, []);
+  const unsubscribe =
+    onAuthStateChanged(
+      auth,
+      (user) => {
+        if (user) {
+          loadProfil(user);
+        }
+      }
+    );
+
+  loadData();
+
+  return () => unsubscribe();
+}, []);
+
+  const loadProfil = async (
+  user
+) => {
+  try {
+    const q = query(
+      collection(db, "rts"),
+      where(
+        "adminUid",
+        "==",
+        user.uid
+      )
+    );
+
+    const snapshot =
+      await getDocs(q);
+
+    if (!snapshot.empty) {
+      const data =
+        snapshot.docs[0].data();
+
+      setInfoRT({
+        rt: data.rt || "",
+        rw: data.rw || "",
+        kelurahan:
+          data.kelurahan || "",
+      });
+    }
+  } catch (error) {
+    console.log(
+      "LOAD PROFIL ERROR:",
+      error
+    );
+  }
+};
+
 
   const loadData = async () => {
     try {
@@ -45,32 +105,36 @@ export default function Dashboard() {
         collection(db, "kk")
       );
 
-      const iuranSnapshot = await getDocs(
-        collection(db, "iuran")
-      );
+      const iuranSnapshot =
+        await getDocs(
+          collection(db, "iuran")
+        );
 
-      const kasSnapshot = await getDocs(
-        collection(db, "kas")
-      );
+      const kasSnapshot =
+        await getDocs(
+          collection(db, "kas")
+        );
 
       setTotalKK(
         kkSnapshot.size
       );
 
-      // Total Warga dari jumlah anggota keluarga
       let totalAnggota = 0;
 
-      kkSnapshot.docs.forEach((doc) => {
-        const data = doc.data();
+      kkSnapshot.docs.forEach(
+        (doc) => {
+          const data = doc.data();
 
-        totalAnggota += Number(
-          data.jumlahAnggota || 0
-        );
-      });
+          totalAnggota += Number(
+            data.jumlahAnggota || 0
+          );
+        }
+      );
 
-      setTotalWarga(totalAnggota);
+      setTotalWarga(
+        totalAnggota
+      );
 
-      // Total Iuran
       const totalIuranValue =
         iuranSnapshot.docs.reduce(
           (total, doc) =>
@@ -85,7 +149,6 @@ export default function Dashboard() {
         totalIuranValue
       );
 
-      // Saldo Kas
       let masuk = 0;
       let keluar = 0;
 
@@ -94,7 +157,8 @@ export default function Dashboard() {
           const data = item.data();
 
           if (
-            data.jenis === "masuk"
+            data.jenis ===
+            "masuk"
           ) {
             masuk += Number(
               data.nominal || 0
@@ -162,12 +226,25 @@ export default function Dashboard() {
             margin: 0,
           }}
         >
-          👋 Halo Admin
+          👋 Halo Admin RT {infoRT.rt}
         </h2>
 
         <p
           style={{
             color: "#636e72",
+            marginTop: "8px",
+            marginBottom: "5px",
+            fontWeight: "600",
+          }}
+        >
+          RW {infoRT.rw} • Kelurahan{" "}
+          {infoRT.kelurahan}
+        </p>
+
+        <p
+          style={{
+            color: "#636e72",
+            margin: 0,
           }}
         >
           Selamat datang di RT Pro
@@ -303,7 +380,6 @@ export default function Dashboard() {
             size={40}
             color="#0984e3"
           />
-
           <h4>Data KK</h4>
         </motion.div>
 
@@ -320,7 +396,6 @@ export default function Dashboard() {
             size={40}
             color="#fdcb6e"
           />
-
           <h4>Iuran</h4>
         </motion.div>
 
@@ -337,7 +412,6 @@ export default function Dashboard() {
             size={40}
             color="#6c5ce7"
           />
-
           <h4>Kas</h4>
         </motion.div>
 
@@ -354,7 +428,6 @@ export default function Dashboard() {
             size={40}
             color="#e17055"
           />
-
           <h4>Pengumuman</h4>
         </motion.div>
       </div>
